@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Summoner {
+  id            String         @id
+  puuid         String         @unique
+  accountId     String
+  name          String
+  profileIconId Int  
+  summonerLevel Int
+  matchHistory  MatchHistory[]
+}
+
+model MatchHistory {
+  id         String        @id
+  summonerId String
+  summoner   Summoner      @relation(fields: [summonerId], references: [id])
+  match      MatchDetails? @relation(fields: [id], references: [id])
+}
+
+model MatchDetails {
+  id           String        @id
+  gameMode     String
+  participants Participant[]
+  matchHistory MatchHistory?
+}
+
+model Participant {
+  id           Int          @id @default(autoincrement())
+  puuid        String
+  summonerName String
+  matchId      String
+  matchDetails MatchDetails @relation(fields: [matchId], references: [id])
+}
