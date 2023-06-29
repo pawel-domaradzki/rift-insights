@@ -15,16 +15,17 @@ model Summoner {
   puuid         String         @unique
   accountId     String
   name          String
-  profileIconId Int  
+  profileIconId Int
   summonerLevel Int
   matchHistory  MatchHistory[]
 }
 
 model MatchHistory {
-  id         String        @id
-  summonerId String
-  summoner   Summoner      @relation(fields: [summonerId], references: [id])
-  match      MatchDetails? @relation(fields: [id], references: [id])
+  id            String        @id
+  summonerId    String
+  summoner      Summoner      @relation(fields: [summonerId], references: [id])
+  match         MatchDetails? @relation(fields: [id], references: [id])
+  gameCreatedAt BigInt?
 }
 
 model MatchDetails {
@@ -35,9 +36,24 @@ model MatchDetails {
 }
 
 model Participant {
-  id           Int          @id @default(autoincrement())
-  puuid        String
-  summonerName String
-  matchId      String
-  matchDetails MatchDetails @relation(fields: [matchId], references: [id])
+  id                          Int          @id @default(autoincrement())
+  matchId                     String
+  puuid                       String
+  summonerName                String
+  item0                       Int
+  item1                       Int
+  item2                       Int
+  item3                       Int
+  item4                       Int
+  item5                       Int
+  item6                       Int
+  kills                       Int
+  assists                     Int
+  deaths                      Int
+  championId                  Int
+  totalDamageDealtToChampions Int
+  totalMinionsKilled          Int
+  goldEarned                  Int
+  wardsPlaced                 Int
+  matchDetails                MatchDetails @relation(fields: [matchId], references: [id])
 }

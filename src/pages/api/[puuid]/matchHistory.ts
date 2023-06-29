@@ -2,7 +2,10 @@ import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
 import axios from "axios";
 import { fetchMatchDetails } from "@/lib/services/match/fetch";
-import { storeMatchDetails } from "@/lib/services/match/store";
+import {
+  storeMatchDetails,
+  storeMatchHistory,
+} from "@/lib/services/match/store";
 
 export default async function handler(
   req: NextApiRequest,
@@ -30,12 +33,21 @@ export default async function handler(
         const matchIds = response.data;
 
         for (const matchId of matchIds) {
-            const matchDetails = await fetchMatchDetails(matchId);
+          const matchDetails = await fetchMatchDetails(matchId);
 
-            if (matchDetails) {
-              await storeMatchDetails(matchId, matchDetails.gameMode, matchDetails.participants);
-            }
-          
+          if (matchDetails) {
+            await storeMatchHistory({
+              summonerId: summoner.id,
+              matchId,
+              gameCreation: matchDetails.gameCreation,
+            });
+
+            await storeMatchDetails(
+              matchId,
+              matchDetails.gameMode,
+              matchDetails.participants
+            );
+          }
         }
 
         res.status(200).json(matchIds);
