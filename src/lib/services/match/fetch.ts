@@ -1,7 +1,8 @@
 // matchService.ts
 import axios from "axios";
+import { Regions } from "../constants/regions";
 
-interface ParticipantMatchStats {
+export interface PlayerMatchStats {
   puuid: string;
   summonerName: string;
   assists: number;
@@ -21,7 +22,13 @@ interface ParticipantMatchStats {
   wardsPlaced: number;
 }
 
-export async function fetchMatchDetails(matchId: string) {
+interface Response {
+  gameMode: string;
+  gameCreation: number;
+  playersMatchStats: PlayerMatchStats[];
+}
+
+export async function fetchMatchDetails(matchId: string): Promise<Response | null> {
   const apiKey = process.env.RIOT_API_KEY;
 
   try {
@@ -31,7 +38,7 @@ export async function fetchMatchDetails(matchId: string) {
 
     const gameMode = data.info.gameMode;
     const gameCreation = data.info.gameCreation;
-    const participants = data.info.participants.map(
+    const playersMatchStats = data.info.participants.map(
       ({
         puuid,
         summonerName,
@@ -50,7 +57,7 @@ export async function fetchMatchDetails(matchId: string) {
         item5,
         item6,
         wardsPlaced,
-      }: ParticipantMatchStats) => ({
+      }: PlayerMatchStats) => ({
         puuid,
         summonerName,
         kills,
@@ -72,10 +79,9 @@ export async function fetchMatchDetails(matchId: string) {
     );
 
     return {
-      matchId,
       gameMode,
       gameCreation,
-      participants,
+      playersMatchStats,
     };
   } catch (error) {
     console.error(error);

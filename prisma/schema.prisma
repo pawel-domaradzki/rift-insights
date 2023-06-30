@@ -11,33 +11,45 @@ datasource db {
 }
 
 model Summoner {
-  id            String         @id
-  puuid         String         @unique
+  id            String               @id
+  puuid         String               @unique
   accountId     String
   name          String
+  region        String
   profileIconId Int
   summonerLevel Int
-  matchHistory  MatchHistory[]
+  playerMatches PlayerMatchHistory[]
+
+  @@unique([name, region])
 }
 
-model MatchHistory {
-  id            String        @id
-  summonerId    String
-  summoner      Summoner      @relation(fields: [summonerId], references: [id])
-  match         MatchDetails? @relation(fields: [id], references: [id])
-  gameCreatedAt BigInt?
+// Match represents a game played.
+model Match {
+  gameId        String
+  region        String
+  gameMode      String
+  gameCreatedAt BigInt
+  playerStats   PlayerMatchStats[]
+  playerMatches PlayerMatchHistory[]
+
+  @@id([region, gameId])
 }
 
-model MatchDetails {
-  id           String        @id
-  gameMode     String
-  participants Participant[]
-  matchHistory MatchHistory?
+// PlayerMatchHistory represents the many-to-many relationship between summoners and matches.
+model PlayerMatchHistory {
+  summonerId String
+  region     String
+  summoner   Summoner @relation(fields: [summonerId], references: [id])
+  gameId     String
+  match      Match    @relation(fields: [region, gameId], references: [region, gameId])
+
+  @@id([summonerId, gameId])
 }
 
-model Participant {
-  id                          Int          @id @default(autoincrement())
-  matchId                     String
+// PlayerMatchStats contains detailed stats about a player's performance in a specific match.
+model PlayerMatchStats {
+  region                      String
+  gameId                      String
   puuid                       String
   summonerName                String
   item0                       Int
@@ -55,5 +67,7 @@ model Participant {
   totalMinionsKilled          Int
   goldEarned                  Int
   wardsPlaced                 Int
-  matchDetails                MatchDetails @relation(fields: [matchId], references: [id])
+  match                       Match  @relation(fields: [region, gameId], references: [region, gameId])
+
+  @@id([region, gameId, puuid])
 }

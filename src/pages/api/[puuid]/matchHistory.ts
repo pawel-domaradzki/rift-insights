@@ -3,9 +3,11 @@ import prisma from "@/lib/prisma";
 import axios from "axios";
 import { fetchMatchDetails } from "@/lib/services/match/fetch";
 import {
-  storeMatchDetails,
+  storeMatch,
   storeMatchHistory,
+  storePlayerMatchStats,
 } from "@/lib/services/match/store";
+import { extractGameId } from "@/lib/util/extractGameId";
 
 export default async function handler(
   req: NextApiRequest,
@@ -33,20 +35,37 @@ export default async function handler(
         const matchIds = response.data;
 
         for (const matchId of matchIds) {
+          const gameId = extractGameId(matchId);
+
+          if (!gameId) {
+            console.error("Invalid matchId format");
+            return null;
+          }
+
           const matchDetails = await fetchMatchDetails(matchId);
 
           if (matchDetails) {
-            await storeMatchHistory({
-              summonerId: summoner.id,
-              matchId,
+            await storeMatch({
+              gameId,
+              gameMode: matchDetails.gameMode,
               gameCreation: matchDetails.gameCreation,
+              region: summoner.region,
             });
 
-            await storeMatchDetails(
-              matchId,
-              matchDetails.gameMode,
-              matchDetails.participants
-            );
+            await storeMatchHistory({
+              summonerId: summoner.id,
+              gameId,
+              region: summoner.region,
+            });
+
+            for (const playerMatchStats of matchDetails.playersMatchStats) {
+              const playerMatchStatsData = {
+                gameId,
+                region: summoner.region,
+                ...playerMatchStats,
+              };
+              await storePlayerMatchStats(playerMatchStatsData);
+            }
           }
         }
 

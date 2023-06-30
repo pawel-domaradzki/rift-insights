@@ -1,26 +1,39 @@
 import prisma from "@/lib/prisma";
+import { PlayerMatchStats } from "@prisma/client";
 
-export async function storeMatchDetails(
-  matchId: string,
-  gameMode: string,
-  participants: any[]
-) {
+interface Match {
+  gameId: string;
+  gameMode: string;
+  region: string;
+  gameCreation: number;
+}
+
+export async function storeMatch({
+  gameId,
+  gameMode,
+  region,
+  gameCreation,
+}: Match) {
   try {
-    const existingMatchDetails = await prisma.matchDetails.findUnique({
-      where: { id: matchId },
+    const existingMatches = await prisma.match.findUnique({
+      where: {
+        region_gameId: {
+          region: region,
+          gameId: gameId,
+        },
+      },
     });
 
-    if (existingMatchDetails) {
-      return existingMatchDetails;
+    if (existingMatches) {
+      return existingMatches;
     }
 
-    const matchDetails = await prisma.matchDetails.create({
+    const matchDetails = await prisma.match.create({
       data: {
-        id: matchId,
+        gameId,
         gameMode,
-        participants: {
-          create: participants,
-        },
+        region,
+        gameCreatedAt: gameCreation,
       },
     });
 
@@ -33,33 +46,59 @@ export async function storeMatchDetails(
 
 interface MatchHistory {
   summonerId: string;
-  matchId: string;
-  gameCreation: number;
+  gameId: string;
+  region: string;
 }
 
 export async function storeMatchHistory({
   summonerId,
-  matchId,
-  gameCreation,
+  gameId,
+  region,
 }: MatchHistory) {
   try {
-    const existingMatchHistory = await prisma.matchHistory.findUnique({
-      where: { id: matchId },
+    const existingMatchHistory = await prisma.playerMatchHistory.findUnique({
+      where: {
+        summonerId_gameId: {
+          summonerId: summonerId,
+          gameId: gameId,
+        },
+      },
     });
 
     if (existingMatchHistory) {
       return existingMatchHistory;
     }
 
-    const matchHistory = await prisma.matchHistory.create({
+    const matchHistory = await prisma.playerMatchHistory.create({
       data: {
         summonerId: summonerId,
-        id: matchId,
-        gameCreatedAt: gameCreation,
+        gameId: gameId,
+        region: region,
       },
     });
 
     return matchHistory;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+interface PlayerMatchStatsData extends Omit<PlayerMatchStats, "id"> {
+  gameId: string;
+  region: string;
+}
+
+export async function storePlayerMatchStats(
+  playerMatchStatsData: PlayerMatchStatsData
+) {
+  try {
+    // Create a new PlayerMatchStats record
+    const playerMatchStats = await prisma.playerMatchStats.create({
+      data: playerMatchStatsData,
+    });
+
+    return playerMatchStats;
   } catch (error) {
     console.error(error);
     return null;
