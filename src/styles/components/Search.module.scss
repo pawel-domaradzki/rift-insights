@@ -1,0 +1,49 @@
+@use "../abstracts/index" as *;
+
+.searchBox {
+    display: flex;
+    margin-inline: auto;
+    background-color: none;
+    width: 100%;
+
+    color: $space-cadet;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 0;
+    max-height: 48px;
+    margin-top: 15px;
+
+    .searchBtn {
+        cursor: pointer;
+        background-color: $oxford-blue;
+        border: none;
+        margin-right: 5px;
+        height: 48px;
+        .icon {
+            color: $ghost-white;
+            height: 1.5rem;
+        }
+        &:hover {
+            .icon {
+                color: $aquamarine;
+            }
+        }
+    }
+    input {
+        color: $ghost-white;
+        background-color: $oxford-blue;
+        border: none;
+        letter-spacing: 1px;
+        font-weight: 500;
+        display: flex;
+        flex-grow: 1;
+        padding: 10px 0;
+
+        &:focus {
+            outline: none;
+            caret-color: $aquamarine;
+            padding-bottom: 10px;
+            border-bottom: 1px solid $space-cadet;
+        }
+    }
+}

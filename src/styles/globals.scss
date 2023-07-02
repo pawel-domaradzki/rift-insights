@@ -1,0 +1,6 @@
+@use "./reset" as *;
+@use "./abstracts/index" as *;
+
+:root {
+  background-color: $oxford-blue;
+}
