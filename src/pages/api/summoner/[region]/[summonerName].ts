@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getQueryParam } from "@/lib/util/getQueryParam";
 import { Regions } from "@/lib/services/constants/regions";
+import { storeMatchHistoryForSummoner } from "@/app/_queries/search";
 
 export default async function handler(
   req: NextApiRequest,
@@ -52,6 +53,11 @@ export default async function handler(
         },
       });
     }
+
+    // storeMatchHistoryForSummoner(summoner.puuid).catch((error) => {
+    //   console.error("Error storing match history", error);
+    // });
+
     res.status(200).json(summoner);
   } catch (error: any) {
     console.error(error);

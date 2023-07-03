@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 import styles from "@/styles/components/Search.module.scss";
 
-import { getSummoner } from "@/app/_queries/search";
+import { getMatchHistory, getMatchesSummary, getSummoner } from "@/app/_queries/search";
 
 interface SearchProps {}
 
@@ -17,7 +17,7 @@ const Search: FC<SearchProps> = ({}) => {
     console.log("fired");
   };
 
-  const { isLoading, error, isError, data } = useQuery({
+  const { data: summonerData } = useQuery({
     queryKey: ["search", search],
     queryFn: () => {
       console.log("fetching");
@@ -26,7 +26,16 @@ const Search: FC<SearchProps> = ({}) => {
     enabled: !!search,
   });
 
-  if (data) console.log(data);
+  const { data: matchesSummaryData, isLoading: isMatchHistoryLoading } = useQuery(
+    {
+      queryKey: ["matchesSummary", summonerData?.puuid],
+      queryFn: () => getMatchesSummary(summonerData?.puuid),
+      enabled: !!summonerData?.puuid,
+    }
+  );
+
+  if (summonerData) console.log(summonerData);
+  if (matchesSummaryData) console.log(matchesSummaryData);
 
   return (
     <div className={styles.searchBox}>

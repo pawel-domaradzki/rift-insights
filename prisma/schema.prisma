@@ -37,13 +37,13 @@ model Match {
 
 // PlayerMatchHistory represents the many-to-many relationship between summoners and matches.
 model PlayerMatchHistory {
-  summonerId String
+  puuid String
   region     String
-  summoner   Summoner @relation(fields: [summonerId], references: [id])
+  summoner   Summoner @relation(fields: [puuid], references: [puuid])
   gameId     String
   match      Match    @relation(fields: [region, gameId], references: [region, gameId])
 
-  @@id([summonerId, gameId])
+  @@id([puuid, gameId])
 }
 
 // PlayerMatchStats contains detailed stats about a player's performance in a specific match.

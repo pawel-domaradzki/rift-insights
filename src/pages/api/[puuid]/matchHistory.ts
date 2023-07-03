@@ -1,13 +1,15 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
 import axios from "axios";
-import { fetchMatchDetails } from "@/lib/services/match/fetch";
 import {
-  storeMatch,
-  storeMatchHistory,
-  storePlayerMatchStats,
+  GameInfoAndPlayerMatchStats,
+  fetchMatchDetails,
+} from "@/lib/services/match/fetch";
+import {
+  storeMatches,
+  storePlayerMatchesHistory,
+  storePlayerMatchesStats,
 } from "@/lib/services/match/store";
-import { extractGameId } from "@/lib/util/extractGameId";
 
 export default async function handler(
   req: NextApiRequest,
@@ -23,57 +25,98 @@ export default async function handler(
       },
     });
 
+    if (!summoner) {
+      return res.status(404).json({ error: "Summoner not found" });
+    }
+
     try {
       const response = await axios.get(
-        `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20`,
+        `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
         {
           headers: { "X-Riot-Token": apiKey },
         }
       );
 
-      if (summoner) {
-        const matchIds = response.data;
+      const matchIds = response.data;
 
-        for (const matchId of matchIds) {
-          const gameId = extractGameId(matchId);
+      const matchDetailPromises = matchIds.map((matchId: string) =>
+        fetchMatchDetails(matchId)
+      );
+      const allMatchDetails = await Promise.all(matchDetailPromises);
 
-          if (!gameId) {
-            console.error("Invalid matchId format");
-            return null;
-          }
+      const allMatches = [];
+      const playerMatchHistory = [];
+      const allPlayerMatchStats = [];
+      const regionGameIdPairs = allMatchDetails.map((matchDetails) => ({
+        gameId: matchDetails.gameId,
+        region: summoner.region,
+      }));
 
-          const matchDetails = await fetchMatchDetails(matchId);
+      const existingMatches = await prisma.match.findMany({
+        where: {
+          OR: regionGameIdPairs.map((pair) => ({
+            gameId: pair.gameId,
+            region: pair.region,
+          })),
+        },
+      });
 
-          if (matchDetails) {
-            await storeMatch({
-              gameId,
-              gameMode: matchDetails.gameMode,
-              gameCreation: matchDetails.gameCreation,
+      const existingRegionGameIdPairs = existingMatches.map((match) => ({
+        gameId: match.gameId,
+        region: match.region,
+      }));
+
+      for (const matchDetails of allMatchDetails) {
+        const regionGameIdPair = {
+          gameId: matchDetails.gameId,
+          region: summoner.region,
+        };
+
+        const exists = existingRegionGameIdPairs.some(
+          (existingPair) =>
+            existingPair.gameId === regionGameIdPair.gameId &&
+            existingPair.region === regionGameIdPair.region
+        );
+
+        if (matchDetails && !exists) {
+          allMatches.push({
+            gameId: matchDetails.gameId,
+            gameMode: matchDetails.gameMode,
+            gameCreation: matchDetails.gameCreation,
+            region: summoner.region,
+          });
+
+          playerMatchHistory.push({
+            puuid: summoner.puuid,
+            gameId: matchDetails.gameId,
+            region: summoner.region,
+          });
+
+          const playerMatchStatsData = matchDetails.playersMatchStats.map(
+            (playerMatchStats: GameInfoAndPlayerMatchStats) => ({
               region: summoner.region,
-            });
+              ...playerMatchStats,
+            })
+          );
 
-            await storeMatchHistory({
-              summonerId: summoner.id,
-              gameId,
-              region: summoner.region,
-            });
-
-            for (const playerMatchStats of matchDetails.playersMatchStats) {
-              const playerMatchStatsData = {
-                gameId,
-                region: summoner.region,
-                ...playerMatchStats,
-              };
-              await storePlayerMatchStats(playerMatchStatsData);
-            }
-          }
+          allPlayerMatchStats.push(...playerMatchStatsData);
         }
-
-        res.status(200).json(matchIds);
-      } else {
-        console.log("Summoner not found");
-        res.status(404).json({ error: "Summoner not found" });
       }
+
+      if (allMatches.length) {
+        await storeMatches(allMatches);
+      }
+      
+      if (playerMatchHistory.length) {
+        await storePlayerMatchesHistory(playerMatchHistory);
+      }
+      
+      if (allPlayerMatchStats.length) {
+        await storePlayerMatchesStats(allPlayerMatchStats);
+      }
+      
+     
+      res.status(200).json({data: "Success"});
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Error fetching match history" });

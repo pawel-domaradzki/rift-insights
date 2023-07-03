@@ -1,6 +1,7 @@
 // matchService.ts
 import axios from "axios";
 import { Regions } from "../constants/regions";
+import { extractGameId } from "@/lib/util/extractGameId";
 
 export interface PlayerMatchStats {
   puuid: string;
@@ -22,20 +23,23 @@ export interface PlayerMatchStats {
   wardsPlaced: number;
 }
 
-interface Response {
+export interface GameInfoAndPlayerMatchStats {
+  gameId: string;
   gameMode: string;
   gameCreation: number;
   playersMatchStats: PlayerMatchStats[];
 }
 
-export async function fetchMatchDetails(matchId: string): Promise<Response | null> {
+export async function fetchMatchDetails(
+  matchId: string
+): Promise<GameInfoAndPlayerMatchStats | null> {
   const apiKey = process.env.RIOT_API_KEY;
 
   try {
     const { data } = await axios.get(
       `https://europe.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${apiKey}`
     );
-
+    const gameId = extractGameId(matchId)!;
     const gameMode = data.info.gameMode;
     const gameCreation = data.info.gameCreation;
     const playersMatchStats = data.info.participants.map(
@@ -79,6 +83,7 @@ export async function fetchMatchDetails(matchId: string): Promise<Response | nul
     );
 
     return {
+      gameId,
       gameMode,
       gameCreation,
       playersMatchStats,
