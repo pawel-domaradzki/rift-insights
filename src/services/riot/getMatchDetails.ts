@@ -1,7 +1,5 @@
-// matchService.ts
 import axios from "axios";
-import { Regions } from "../constants/regions";
-import { extractGameId } from "@/lib/util/extractGameId";
+import { extractGameId } from "@/shared/utils/extractGameId";
 
 export interface PlayerMatchStats {
   puuid: string;
@@ -30,7 +28,7 @@ export interface GameInfoAndPlayerMatchStats {
   playersMatchStats: PlayerMatchStats[];
 }
 
-export async function fetchMatchDetails(
+export async function getRiotMatchDetails(
   matchId: string
 ): Promise<GameInfoAndPlayerMatchStats | null> {
   const apiKey = process.env.RIOT_API_KEY;

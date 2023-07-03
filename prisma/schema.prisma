@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -23,7 +20,6 @@ model Summoner {
   @@unique([name, region])
 }
 
-// Match represents a game played.
 model Match {
   gameId        String
   region        String
@@ -35,18 +31,16 @@ model Match {
   @@id([region, gameId])
 }
 
-// PlayerMatchHistory represents the many-to-many relationship between summoners and matches.
 model PlayerMatchHistory {
-  puuid String
-  region     String
-  summoner   Summoner @relation(fields: [puuid], references: [puuid])
-  gameId     String
-  match      Match    @relation(fields: [region, gameId], references: [region, gameId])
+  puuid    String
+  region   String
+  summoner Summoner @relation(fields: [puuid], references: [puuid])
+  gameId   String
+  match    Match    @relation(fields: [region, gameId], references: [region, gameId])
 
   @@id([puuid, gameId])
 }
 
-// PlayerMatchStats contains detailed stats about a player's performance in a specific match.
 model PlayerMatchStats {
   region                      String
   gameId                      String

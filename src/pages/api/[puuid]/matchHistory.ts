@@ -1,15 +1,16 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
-import axios from "axios";
-import {
-  GameInfoAndPlayerMatchStats,
-  fetchMatchDetails,
-} from "@/lib/services/match/fetch";
+
 import {
   storeMatches,
   storePlayerMatchesHistory,
   storePlayerMatchesStats,
-} from "@/lib/services/match/store";
+} from "@/services/db";
+import {
+  GameInfoAndPlayerMatchStats,
+  getRiotMatchDetails,
+} from "@/services/riot/getMatchDetails";
+import { getRiotMatchesHistory } from "@/services/riot/getMatchesHistory";
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,7 +18,6 @@ export default async function handler(
 ) {
   if (req.method === "GET") {
     const puuid = req.query.puuid as string;
-    const apiKey = process.env.RIOT_API_KEY;
 
     const summoner = await prisma.summoner.findUnique({
       where: {
@@ -30,17 +30,10 @@ export default async function handler(
     }
 
     try {
-      const response = await axios.get(
-        `https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
-        {
-          headers: { "X-Riot-Token": apiKey },
-        }
-      );
+      const historyMatches = await getRiotMatchesHistory(puuid);
 
-      const matchIds = response.data;
-
-      const matchDetailPromises = matchIds.map((matchId: string) =>
-        fetchMatchDetails(matchId)
+      const matchDetailPromises = historyMatches.map((matchId: string) =>
+        getRiotMatchDetails(matchId)
       );
       const allMatchDetails = await Promise.all(matchDetailPromises);
 
@@ -94,8 +87,9 @@ export default async function handler(
 
           const playerMatchStatsData = matchDetails.playersMatchStats.map(
             (playerMatchStats: GameInfoAndPlayerMatchStats) => ({
-              region: summoner.region,
               ...playerMatchStats,
+              gameId: matchDetails.gameId,
+              region: summoner.region,
             })
           );
 
@@ -106,17 +100,16 @@ export default async function handler(
       if (allMatches.length) {
         await storeMatches(allMatches);
       }
-      
+
       if (playerMatchHistory.length) {
         await storePlayerMatchesHistory(playerMatchHistory);
       }
-      
+
       if (allPlayerMatchStats.length) {
         await storePlayerMatchesStats(allPlayerMatchStats);
       }
-      
-     
-      res.status(200).json({data: "Success"});
+
+      res.status(200).json({ data: "Success" });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Error fetching match history" });

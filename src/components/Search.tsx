@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 import styles from "@/styles/components/Search.module.scss";
 
-import { getMatchHistory, getMatchesSummary, getSummoner } from "@/app/_queries/search";
+import { getMatchesSummary, getSummoner } from "@/app/_queries/search";
 
 interface SearchProps {}
 

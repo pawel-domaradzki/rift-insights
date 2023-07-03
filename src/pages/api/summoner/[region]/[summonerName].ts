@@ -1,11 +1,10 @@
-import axios from "axios";
-
 import prisma from "@/lib/prisma";
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getQueryParam } from "@/lib/util/getQueryParam";
-import { Regions } from "@/lib/services/constants/regions";
-import { storeMatchHistoryForSummoner } from "@/app/_queries/search";
+import { getQueryParam } from "@/shared/utils/getQueryParam";
+import { Regions } from "@/shared/constants/regions";
+import { getRiotSummoner } from "@/services/riot/getSummoner";
+import { storeSummoner } from "@/services/db/storeSummoner";
 
 export default async function handler(
   req: NextApiRequest,
@@ -27,36 +26,9 @@ export default async function handler(
     });
 
     if (!summoner) {
-      const apiKey = process.env.RIOT_API_KEY;
-      const { data } = await axios.get(
-        `https://${region}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${summonerName}?api_key=${apiKey}`
-      );
-
-      summoner = await prisma.summoner.upsert({
-        where: { id: data.id },
-        update: {
-          accountId: data.accountId,
-          puuid: data.puuid,
-          name: data.name,
-          profileIconId: data.profileIconId,
-          summonerLevel: data.summonerLevel,
-          region: region,
-        },
-        create: {
-          id: data.id,
-          accountId: data.accountId,
-          puuid: data.puuid,
-          name: data.name,
-          profileIconId: data.profileIconId,
-          summonerLevel: data.summonerLevel,
-          region: region,
-        },
-      });
+      const summonerData = await getRiotSummoner(region, summonerName);
+      summoner = await storeSummoner(summonerData, region);
     }
-
-    // storeMatchHistoryForSummoner(summoner.puuid).catch((error) => {
-    //   console.error("Error storing match history", error);
-    // });
 
     res.status(200).json(summoner);
   } catch (error: any) {
