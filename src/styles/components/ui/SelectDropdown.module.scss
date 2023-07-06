@@ -1,0 +1,78 @@
+@use "../../abstracts/index" as *;
+
+.SelectTrigger {
+    color: $white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-left: solid $mainPurple 1px;
+    padding: 4px 15px;
+    font-size: 0.9rem;
+    line-height: 1;
+    height: 35px;
+    gap: 5px;
+    background-color: var(--background);
+    min-width: 160px;
+}
+.SelectTrigger:hover {
+    background-color: transparentColor(0.1, $mainPurple);
+}
+
+.SelectContent {
+    border-radius: 4px;
+    width: var(--radix-select-trigger-width);
+    max-height: 280px;
+    background-color: var(--background);
+
+    border: solid $mainPurple 1px;
+}
+
+.SelectViewport {
+    color: $mediumGrey;
+    padding: 10px 0;
+}
+
+.SelectItem {
+    font-size: 0.9rem;
+    line-height: 1;
+    color: $mediumGrey;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 35px 0 10px;
+    position: relative;
+    user-select: none;
+    border-radius: 4px;
+    width: 92%;
+    margin-inline: auto;
+}
+
+.SelectItem[data-highlighted] {
+    outline: none;
+    background-color: transparentColor(0.1, $mainPurple);
+    color: $white;
+}
+
+.SelectItemIndicator {
+    position: absolute;
+    left: 0;
+    width: 25px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.SelectScrollButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 25px;
+    background-color: transparentColor(0.05, $mainPurple);
+    cursor: default;
+}
+
+.Checked {
+    width: 8px;
+}

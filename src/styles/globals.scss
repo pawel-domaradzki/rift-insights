@@ -3,4 +3,15 @@
 
 :root {
   background-color: $oxford-blue;
+  color: $white;
+  --foreground: #{$white};
+  --background: #{$oxford-blue};
+}
+
+.wrapper {
+  height: 100vh;
+  min-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
